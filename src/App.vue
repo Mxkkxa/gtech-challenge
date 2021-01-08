@@ -4,9 +4,20 @@
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link>
     </div>
+      <HelloI18n/>
     <router-view/>
   </div>
 </template>
+
+<script>
+import HelloI18n from "./components/HelloI18n";
+export default {
+    name: 'app',
+  components: {
+    HelloI18n
+  }
+}
+</script>
 
 <style lang="scss">
 #app {
