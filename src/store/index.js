@@ -57,36 +57,36 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    _fetchMovies({ getters, commit }) {
+    _fetchMovies({ getters }) {
       return axios.get(getters.getFetchMoviesUrl)
         .then(response => {
-          commit('SET_POPULAR_MOVIES', response.data)
           return response.data
         })
     },
-    _fetchTVShows({ getters, commit }) {
+    _fetchTVShows({ getters }) {
       return axios.get(getters.getFetchTVShowsUrl)
         .then(response => {
-          commit('SET_POPULAR_TV_SHOWS', response.data)
           return response.data
         })
     },
+    _fetchAndAssignAllShows({ dispatch, commit }) {
+      return Promise.all([dispatch('_fetchMovies'), dispatch('_fetchTVShows')]).then((shows) => {
+        commit('SET_POPULAR_MOVIES', shows[0].data)
+        commit('SET_POPULAR_TV_SHOWS', shows[1].data)
+      })
+    },
+    _prepareShowsBucket({ state }) {
+      const combinedShows = [].concat(state.popularMovies.results, state.popularTVShows.results)
+      state.movieAndTVBucket.fillCount = 1
+      state.movieAndTVBucket.results = combinedShows
+    },
     // todo mixture of 2 arrays
-    // fetches 2 shows
-    // increases page count
-    // concats shows
-    // sets bucket size
-    // assigns concatted shows to bucket
-    // returns the value
-    fillMoviesAndTVBucket({ dispatch, state, commit }) {
+    async fillMoviesAndTVBucket({ dispatch, state, commit }) {
+      await dispatch('_fetchAndAssignAllShows')
+      dispatch('_prepareShowsBucket')
+      commit('INCREASE_CURRENT_PAGE')
       if (state.movieAndTVBucket.fillCount <= 0) {
-        return Promise.all([dispatch('_fetchMovies'), dispatch('_fetchTVShows')]).then(() => {
-          commit('INCREASE_CURRENT_PAGE')
-          const combinedShows = [].concat(state.popularMovies.results, state.popularTVShows.results)
-          state.movieAndTVBucket.fillCount = 1
-          state.movieAndTVBucket.results = combinedShows
-          return state.movieAndTVBucket.results.slice(0, 20)
-        })
+        return state.movieAndTVBucket.results.slice(0, 20)
       } else {
         state.movieAndTVBucket.fillCount--
         return state.movieAndTVBucket.results.slice(20, 41)
