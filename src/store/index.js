@@ -9,6 +9,7 @@ export default new Vuex.Store({
     apiKey: '6708a977e4d39945009e7bd4e0cb9acd',
     moviesUrl: 'https://api.themoviedb.org/3/movie/popular?api_key=',
     TVShowsUrl: 'https://api.themoviedb.org/3/tv/popular?api_key=',
+    creditsUrl: 'https://api.themoviedb.org/3/',
     lang: 'en',
     popularMovies: {},
     popularTVShows: {},
@@ -20,12 +21,47 @@ export default new Vuex.Store({
     currentPage: 1,
     sortType: '',
     searchTerm: '',
-    selectedMovieOrTVId: '',
-
+    selectedMovieOrTVId: 464052,
+    selectedShowCredits: {}
   },
   getters: {
     getFetchMoviesUrl: state => `${state.moviesUrl}${state.apiKey}&page=${state.currentPage}`,
-    getFetchTVShowsUrl: state => `${state.TVShowsUrl}${state.apiKey}&page=${state.currentPage}`
+    getFetchTVShowsUrl: state => `${state.TVShowsUrl}${state.apiKey}&page=${state.currentPage}`,
+    getFetchShowCreditsUrl: (state, getters) => {
+      const show = getters.getSelectedShowById
+      if (Object.prototype.hasOwnProperty.call(show, "adult")) {
+        return `${state.creditsUrl}movie/${state.selectedMovieOrTVId}/credits?api_key=${state.apiKey}`
+      } else {
+        return `${state.creditsUrl}tv/${state.selectedMovieOrTVId}/credits?api_key=${state.apiKey}`
+      }
+    },
+    getSelectedShowById: state => state.loadedMovieAndTVShows.filter(show => show.id === state.selectedMovieOrTVId)[0],
+    getFilteredShows: state => filter => {
+      if (state.searchTerm !== '') {
+        const results = state.loadedMovieAndTVShows.filter(show => {
+          if (show.title?.includes(state.searchTerm)) {
+            return show;
+          } else if (show.original_title?.includes(state.searchTerm)) {
+            return show;
+          }
+        });
+        console.log(results)
+        return results
+      } else {
+        switch (filter) {
+          case 'popularity-asc':
+            return state.loadedMovieAndTVShows.sort((a, b) => a.popularity - b.popularity)
+          case 'popularity-desc':
+            return state.loadedMovieAndTVShows.sort((a, b) => b.popularity - a.popularity)
+          case 'vote-asc':
+            return state.loadedMovieAndTVShows.sort((a, b) => a.vote_average - b.vote_average)
+          case 'vote-desc':
+            return state.loadedMovieAndTVShows.sort((a, b) => b.vote_average - a.vote_average)
+          default:
+            break;
+        }
+      }
+    }
   },
   mutations: {
     SET_POPULAR_MOVIES(state, payload) {
@@ -53,8 +89,11 @@ export default new Vuex.Store({
       state.movieAndTVBucket = payload
     },
     ADD_LOADED_MOVIE_AND_TV_SHOWS(state, payload) {
-      state.loadedMovieAndTVShows.push(payload)
+      state.loadedMovieAndTVShows = [].concat(state.loadedMovieAndTVShows, payload)
     },
+    SET_SELECTED_SHOW_CREDITS(state, payload) {
+      state.selectedShowCredits = payload
+    }
   },
   actions: {
     _fetchMovies({ getters }) {
@@ -81,7 +120,7 @@ export default new Vuex.Store({
       state.movieAndTVBucket.results = combinedShows
     },
     // todo mixture of 2 arrays
-    async fillMoviesAndTVBucket({ dispatch, state, commit }) {
+    async _fillMoviesAndTVBucket({ dispatch, state, commit }) {
       if (state.movieAndTVBucket.fillCount <= 0) {
         await dispatch('_fetchAndAssignAllShows')
         dispatch('_prepareShowsBucket')
@@ -92,6 +131,16 @@ export default new Vuex.Store({
         return state.movieAndTVBucket.results.slice(20, 41)
       }
     },
+    async loadShowsData({ commit, dispatch }) {
+      const showsData = await dispatch('_fillMoviesAndTVBucket')
+      commit('ADD_LOADED_MOVIE_AND_TV_SHOWS', showsData)
+    },
+    async getSelectedShowCast({ commit, getters }) {
+      axios.get(getters.getFetchShowCreditsUrl)
+        .then(response => {
+          commit('SET_SELECTED_SHOW_CREDITS', response.data)
+        })
+    }
   },
   modules: {
   }

@@ -3,6 +3,10 @@
     <img alt="Vue logo" src="../assets/logo.png" />
     <HelloWorld msg="Welcome to Your Vue.js App" />
     <button @click="loadm">fetch shows</button>
+    <button @click="filtershows">filter shows</button>
+    <button @click="getSelectedShow">get sel show</button>
+    <button @click="getCast">get cast</button>
+    
   </div>
 </template>
 
@@ -20,7 +24,16 @@ export default {
   },
   methods: {
     async loadm() {
-      console.log(await this.$store.dispatch("fillMoviesAndTVBucket"));
+      console.log(await this.$store.dispatch("loadShowsData"));
+    },
+    async filtershows() {
+      console.log(this.$store.getters.getFilteredShows('popularity-desc'));
+    },
+        async getSelectedShow() {
+      console.log(this.$store.getters.getSelectedShowById);
+    },
+    async getCast(){
+await this.$store.dispatch("getSelectedShowCast")
     }
   }
 };
