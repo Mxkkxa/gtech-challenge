@@ -71,8 +71,8 @@ export default new Vuex.Store({
     },
     _fetchAndAssignAllShows({ dispatch, commit }) {
       return Promise.all([dispatch('_fetchMovies'), dispatch('_fetchTVShows')]).then((shows) => {
-        commit('SET_POPULAR_MOVIES', shows[0].data)
-        commit('SET_POPULAR_TV_SHOWS', shows[1].data)
+        commit('SET_POPULAR_MOVIES', shows[0])
+        commit('SET_POPULAR_TV_SHOWS', shows[1])
       })
     },
     _prepareShowsBucket({ state }) {
@@ -82,10 +82,10 @@ export default new Vuex.Store({
     },
     // todo mixture of 2 arrays
     async fillMoviesAndTVBucket({ dispatch, state, commit }) {
-      await dispatch('_fetchAndAssignAllShows')
-      dispatch('_prepareShowsBucket')
-      commit('INCREASE_CURRENT_PAGE')
       if (state.movieAndTVBucket.fillCount <= 0) {
+        await dispatch('_fetchAndAssignAllShows')
+        dispatch('_prepareShowsBucket')
+        commit('INCREASE_CURRENT_PAGE')
         return state.movieAndTVBucket.results.slice(0, 20)
       } else {
         state.movieAndTVBucket.fillCount--
