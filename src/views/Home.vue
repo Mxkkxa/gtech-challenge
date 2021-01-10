@@ -33,7 +33,7 @@ export default {
       console.log(this.$store.getters.getSelectedShowById);
     },
     async getCast(){
-await this.$store.dispatch("getSelectedShowCast")
+await this.$store.dispatch("loadShowCreditsAndDetails")
     }
   }
 };

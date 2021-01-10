@@ -21,18 +21,27 @@ export default new Vuex.Store({
     currentPage: 1,
     sortType: '',
     searchTerm: '',
-    selectedMovieOrTVId: 464052,
-    selectedShowCredits: {}
+    selectedMovieOrTVId: 63174, //464052, 63174
+    selectedShowCredits: {},
+    selectedShowDetails: {}
   },
   getters: {
     getFetchMoviesUrl: state => `${state.moviesUrl}${state.apiKey}&page=${state.currentPage}`,
     getFetchTVShowsUrl: state => `${state.TVShowsUrl}${state.apiKey}&page=${state.currentPage}`,
     getFetchShowCreditsUrl: (state, getters) => {
       const show = getters.getSelectedShowById
-      if (Object.prototype.hasOwnProperty.call(show, "adult")) {
+      if (show !== undefined && Object.prototype.hasOwnProperty.call(show, "adult")) {
         return `${state.creditsUrl}movie/${state.selectedMovieOrTVId}/credits?api_key=${state.apiKey}`
       } else {
         return `${state.creditsUrl}tv/${state.selectedMovieOrTVId}/credits?api_key=${state.apiKey}`
+      }
+    },
+    getFetchShowDetailsUrl: (state, getters) => {
+      const show = getters.getSelectedShowById
+      if (show !== undefined && Object.prototype.hasOwnProperty.call(show, "adult")) {
+        return `${state.creditsUrl}movie/${state.selectedMovieOrTVId}?api_key=${state.apiKey}`
+      } else {
+        return `${state.creditsUrl}tv/${state.selectedMovieOrTVId}?api_key=${state.apiKey}`
       }
     },
     getSelectedShowById: state => state.loadedMovieAndTVShows.filter(show => show.id === state.selectedMovieOrTVId)[0],
@@ -61,7 +70,9 @@ export default new Vuex.Store({
             break;
         }
       }
-    }
+    },
+    getSelectedShowDetails: state => state.selectedShowDetails,
+    getSelectedShowCredits: state => state.selectedShowCredits
   },
   mutations: {
     SET_POPULAR_MOVIES(state, payload) {
@@ -93,6 +104,9 @@ export default new Vuex.Store({
     },
     SET_SELECTED_SHOW_CREDITS(state, payload) {
       state.selectedShowCredits = payload
+    },
+    SET_SELECTED_SHOW_DETAILS(state, payload) {
+      state.selectedShowDetails = payload
     }
   },
   actions: {
@@ -135,11 +149,20 @@ export default new Vuex.Store({
       const showsData = await dispatch('_fillMoviesAndTVBucket')
       commit('ADD_LOADED_MOVIE_AND_TV_SHOWS', showsData)
     },
-    async getSelectedShowCast({ commit, getters }) {
+    async _getSelectedShowCast({ commit, getters }) {
       axios.get(getters.getFetchShowCreditsUrl)
         .then(response => {
           commit('SET_SELECTED_SHOW_CREDITS', response.data)
         })
+    },
+    async _getSelectedShowDetail({ commit, getters }) {
+      axios.get(getters.getFetchShowDetailsUrl)
+        .then(response => {
+          commit('SET_SELECTED_SHOW_DETAILS', response.data)
+        })
+    },
+    async loadShowCreditsAndDetails({ dispatch }) {
+      return await Promise.all([dispatch('_getSelectedShowCast'), dispatch('_getSelectedShowDetail')])
     }
   },
   modules: {
