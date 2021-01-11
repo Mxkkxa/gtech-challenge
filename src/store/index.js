@@ -10,6 +10,8 @@ export default new Vuex.Store({
     moviesUrl: 'https://api.themoviedb.org/3/movie/popular?api_key=',
     TVShowsUrl: 'https://api.themoviedb.org/3/tv/popular?api_key=',
     creditsUrl: 'https://api.themoviedb.org/3/',
+    castImgUrl: 'https://image.tmdb.org/t/p/w200/',
+    posterImgUrl: 'https://image.tmdb.org/t/p/w300/',
     lang: 'en',
     popularMovies: {},
     popularTVShows: {},
@@ -45,19 +47,25 @@ export default new Vuex.Store({
       }
     },
     getSelectedShowById: state => state.loadedMovieAndTVShows.filter(show => show.id === state.selectedMovieOrTVId)[0],
-    getFilteredShows: state => filter => {
+    getFilteredShows: state => {
       if (state.searchTerm !== '') {
         const results = state.loadedMovieAndTVShows.filter(show => {
           if (show.title?.includes(state.searchTerm)) {
             return show;
-          } else if (show.original_title?.includes(state.searchTerm)) {
+            // for movies
+          } else if (show.original_title?.toLowerCase().includes(state.searchTerm.toLowerCase())
+            || show.title?.toLowerCase().includes(state.searchTerm.toLowerCase())) {
+            return show;
+            // for tv series
+          } else if (show.original_name?.toLowerCase().includes(state.searchTerm.toLowerCase())
+            || show.name?.toLowerCase().includes(state.searchTerm.toLowerCase())) {
             return show;
           }
         });
         console.log(results)
         return results
       } else {
-        switch (filter) {
+        switch (state.sortType) {
           case 'popularity-asc':
             return state.loadedMovieAndTVShows.sort((a, b) => a.popularity - b.popularity)
           case 'popularity-desc':
@@ -67,10 +75,12 @@ export default new Vuex.Store({
           case 'vote-desc':
             return state.loadedMovieAndTVShows.sort((a, b) => b.vote_average - a.vote_average)
           default:
-            break;
+            // popularity-desc
+            return state.loadedMovieAndTVShows.sort((a, b) => b.popularity - a.popularity)
         }
       }
     },
+    lang: state => state.lang,
     getSelectedShowDetails: state => state.selectedShowDetails,
     getSelectedShowCredits: state => state.selectedShowCredits
   },
@@ -107,6 +117,9 @@ export default new Vuex.Store({
     },
     SET_SELECTED_SHOW_DETAILS(state, payload) {
       state.selectedShowDetails = payload
+    },
+    SET_LANGUAGE(state, payload) {
+      state.lang = payload
     }
   },
   actions: {
