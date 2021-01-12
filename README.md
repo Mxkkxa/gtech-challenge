@@ -1,5 +1,8 @@
 # gtech-challenge
 
+![alt text](https://github.com/Mxkkxa/gtech-challenge/raw/main/seeme.PNG?raw=true)
+
+
 ## Project setup
 ```
 npm install
