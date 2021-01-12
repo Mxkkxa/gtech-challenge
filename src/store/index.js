@@ -23,9 +23,10 @@ export default new Vuex.Store({
     currentPage: 1,
     sortType: '',
     searchTerm: '',
-    selectedMovieOrTVId: 63174, //464052, 63174
+    selectedMovieOrTVId: 0, //464052, 63174
     selectedShowCredits: {},
-    selectedShowDetails: {}
+    selectedShowDetails: {},
+    isFetching: false,
   },
   getters: {
     getFetchMoviesUrl: state => `${state.moviesUrl}${state.apiKey}&page=${state.currentPage}`,
@@ -62,7 +63,7 @@ export default new Vuex.Store({
             return show;
           }
         });
-        console.log(results)
+        // console.log(results)
         return results
       } else {
         switch (state.sortType) {
@@ -120,6 +121,9 @@ export default new Vuex.Store({
     },
     SET_LANGUAGE(state, payload) {
       state.lang = payload
+    },
+    SET_IS_FETCHING(state, payload) {
+      state.isFetching = payload
     }
   },
   actions: {
@@ -152,15 +156,24 @@ export default new Vuex.Store({
         await dispatch('_fetchAndAssignAllShows')
         dispatch('_prepareShowsBucket')
         commit('INCREASE_CURRENT_PAGE')
+        // return new Promise((resolve) => {
+        //   resolve(state.movieAndTVBucket.results.slice(0, 20))
+        // })
         return state.movieAndTVBucket.results.slice(0, 20)
       } else {
         state.movieAndTVBucket.fillCount--
+        // return new Promise((resolve) => {
+        //   resolve(state.movieAndTVBucket.results.slice(20, 41))
+        // })
         return state.movieAndTVBucket.results.slice(20, 41)
       }
     },
-    async loadShowsData({ commit, dispatch }) {
+    async loadShowsData({ commit, dispatch, state }) {
+      if (state.isFetching === true) return;
+      commit('SET_IS_FETCHING', true)
       const showsData = await dispatch('_fillMoviesAndTVBucket')
       commit('ADD_LOADED_MOVIE_AND_TV_SHOWS', showsData)
+      commit('SET_IS_FETCHING', false)
     },
     async _getSelectedShowCast({ commit, getters }) {
       axios.get(getters.getFetchShowCreditsUrl)

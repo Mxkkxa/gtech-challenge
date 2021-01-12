@@ -15,7 +15,7 @@
         ></v-select>
       </v-col>
     </v-row>
-    <v-row class="mb-6">
+    <v-row class="mb-6" id="shows">
       <v-col cols="12" sm="4" md="4" lg="4" xl="4">
         <v-select
           :items="items"
@@ -23,10 +23,8 @@
           :label="$t('sort-label')"
         ></v-select>
       </v-col>
-
       <ShowBox v-for="show in shows" :show="show" :key="show.id" />
-
-      <button @click="$store.dispatch('loadShowsData')">
+      <button hidden @click="loadShows">
         {{ $t("more") }}
       </button>
     </v-row>
@@ -43,7 +41,20 @@ export default {
     ShowBox
   },
   beforeMount() {
-    this.$store.dispatch("loadShowsData");
+    // this.$store.dispatch("loadShowsData");
+  },
+  async mounted() {
+    const listElm = document.querySelector("#shows");
+    listElm.addEventListener("scroll", async () => {
+      if (
+        listElm.scrollTop + listElm.clientHeight >= listElm.scrollHeight &&
+        this.$store.state.searchTerm === ""
+      ) {
+        await this.loadShows();
+      }
+    });
+
+    await this.loadShows();
   },
   computed: {
     shows() {
@@ -95,17 +106,8 @@ export default {
     }
   },
   methods: {
-    async loadm() {
-      console.log(await this.$store.dispatch("loadShowsData"));
-    },
-    async filtershows() {
-      console.log(this.$store.getters.getFilteredShows("popularity-desc"));
-    },
-    async getSelectedShow() {
-      console.log(this.$store.getters.getSelectedShowById);
-    },
-    async getCast() {
-      await this.$store.dispatch("getSelectedShowCast");
+    async loadShows() {
+      await this.$store.dispatch("loadShowsData");
     }
   },
   data: function() {
@@ -125,11 +127,18 @@ export default {
 };
 </script>
 
+<style lang="scss">
+#shows {
+  height: 85vh;
+  overflow-y: auto;
+}
+</style>
+
 <i18n>
 {
   "en": {
     "select-language": "Language",
-    "more": "more",
+    "more": "load more",
     "search-label": "Movie or TV series name",
     "details-button": "Details",
     "sort-label": "Sort by",

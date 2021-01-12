@@ -21,4 +21,8 @@ export default {
 </script>
 
 <style lang="scss">
+body,
+html {
+  overflow: hidden;
+}
 </style>
